@@ -1,5 +1,11 @@
 <?php
 session_start();
+if(!isset($_SESSION['user_id'])){
+    session_destroy();
+    header("Location: login.php");  // Add a semicolon here
+    exit();  // Always use exit after header to stop further script execution
+}
+
 require 'db_connect.php'; // Database connection
 
 $pdo = Database::connect();
@@ -26,6 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
 
 // Handle editing an existing issue
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
+    if( !($SESSION['admin'] == "Y" || $_SESSION['user_id'] == $POST['per_id'] ) ){
+        header("Location: issues_list.php");
+        exit();
+    }
     $id = $_POST['id']; // The issue ID to update
     $project = $_POST['project'];
     $short_description = $_POST['short_description'];
@@ -62,6 +72,7 @@ $issues = $pdo->query($query)->fetchAll(PDO::FETCH_ASSOC);
 Database::disconnect();
 ?>
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -89,7 +100,7 @@ Database::disconnect();
         <!-- Buttons for adding a new issue and viewing all comments -->
         <div class="d-flex mb-3">
     <button class="btn btn-success me-3" data-bs-toggle="modal" data-bs-target="#addIssueModal">+ Add New Issue</button>
-    <a href="comments.php" class="btn btn-info" target="_blank">View All Comments</a>
+    <a href="logout.php" class="btn btn-info">logout</a>
 </div>
 
 
@@ -123,6 +134,7 @@ Database::disconnect();
                             <td><?= htmlspecialchars($issue['close_date']) ?></td>
                             <td><?= htmlspecialchars($issue['org']) ?></td>
                             <td>
+
                                 <!-- View Button -->
                                 <button class="btn btn-info btn-sm" data-bs-toggle="modal" data-bs-target="#viewIssueModal" 
                                     data-id="<?= $issue['id'] ?>" 
@@ -134,6 +146,7 @@ Database::disconnect();
                                     data-close_date="<?= $issue['close_date'] ?>"
                                     data-org="<?= htmlspecialchars($issue['org']) ?>">View</button>
 
+                                <?php if($_SESSION['user_id'] == $issue['per_id'] || $_SESSION['admin'] == "Y") { ?>    
                                 <!-- Edit Button -->
                                 <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editIssueModal" 
                                     data-id="<?= $issue['id'] ?>" 
@@ -147,6 +160,7 @@ Database::disconnect();
 
                                 <!-- Delete Button -->
                                 <a href="issues_list.php?delete=<?= $issue['id'] ?>" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this issue?');">Delete</a>
+                                <?php } ?>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -284,6 +298,16 @@ Database::disconnect();
 
                         <dt class="col-sm-3">Organization</dt>
                         <dd class="col-sm-9" id="view_org"></dd>
+
+                        <dd class="col-sm-3">comments....<?php echo $issue['id']?></dd>
+                        <?php 
+                            $comments_sql = "SELECT * FROM iss_comments, iss_persons 
+                            WHERE iss_id = " . $issue['id'] . "
+                            ORDER BY posted_date DESC";
+                            $comments_stmt = $pdo->query($comments_sql);
+                            $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
+                        ?>
+
                     </dl>
                 </div>
             </div>
