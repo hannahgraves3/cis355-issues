@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add'])) {
 
 // Handle editing an existing issue
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['edit'])) {
-    if( !($SESSION['admin'] == "Y" || $_SESSION['user_id'] == $POST['per_id'] ) ){
+    if( !($_SESSION['admin'] == "Y" || $_SESSION['user_id'] == $_POST['per_id'] ) ){
         header("Location: issues_list.php");
         exit();
     }
@@ -299,14 +299,23 @@ Database::disconnect();
                         <dt class="col-sm-3">Organization</dt>
                         <dd class="col-sm-9" id="view_org"></dd>
 
-                        <dd class="col-sm-3">comments....<?php echo $issue['id']?></dd>
+                        <dt class="col-sm-3">Comments</dt>
+                        <dd class="col-sm-9" id="view_comments">Loading comments...</dd>
                         <?php 
+                            $com_iss_id = $issue['id'];
+                            
                             $comments_sql = "SELECT * FROM iss_comments, iss_persons 
-                            WHERE iss_id = " . $issue['id'] . "
+                            WHERE iss_id = $com_iss_id
                             ORDER BY posted_date DESC";
                             $comments_stmt = $pdo->query($comments_sql);
                             $comments = $comments_stmt->fetchAll(PDO::FETCH_ASSOC);
-                        ?>
+                            foreach ($comments as $comment): ?>
+                                <p>
+                                    <strong><?= htmlspecialchars($comment['lname'] . ", " . $comment['fname']) ?></strong><br>
+                                    <?= htmlspecialchars($comment['short_description']) ?><br>
+                                    <em><?= htmlspecialchars($comment['open_date']) ?></em>
+                                </p>
+                        <?php endforeach; ?>
 
                     </dl>
                 </div>
