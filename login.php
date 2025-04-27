@@ -1,4 +1,12 @@
 <?php
+
+// ADMIN: hrgraves@svsu.edu 
+//ADMIN PASS: hannah
+
+// NON_ADMIN: JohnDoe@gmail.com
+//NON_ADMIN PASS: hannah
+
+
 session_start();
 require 'db_connect.php'; // Your PDO connection setup
 
